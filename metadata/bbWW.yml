@@ -1,0 +1,39 @@
+runner:
+  chunksize: 1000
+  maxchunks: 20
+  test_files: 2
+  data_tier: nanoAOD
+  allowlist_sites:
+    - T3_US_FNALLPC
+    - T3_US_MIT
+    - T2_CH_CERN
+    - T2_CH_MIT
+    - T2_CH_Nebraska
+
+config:
+  corrections_metadata: analysis/metadata/corrections.yml
+
+datasets:
+  GluGluToHHTo2B2VLNu2J:
+    xs: 1.
+    'UL16_preVFP':
+      nanoAOD: bbWW/metadata/JMENano_HHto2B2VLNu2J_UL16.txt
+  TTToSemiLeptonic:
+    xs: 1.
+    'UL16_preVFP':
+      nanoAOD: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv9-20UL16JMENano_106X_mcRun2_asymptotic_v17-v1/NANOAODSIM
+
+  data:
+    'UL16_preVFP':
+      lumi: 1.
+      trigger:
+        - IsoMu22
+        - IsoTkMu22
+        - IsoMu22_eta2p1
+        - IsoTkMu22_eta2p1
+        - IsoMu24
+        - IsoTkMu24
+        - Ele27_WPTight_Gsf
+        - Ele25_eta2p1_WPTight_Gsf
+        - Ele27_eta2p1_WPLoose_Gsf
+      nanoAOD: /DoubleMuon/Run2018B-UL2018_MiniAODv2_JMENanoAODv9-v1/NANOAOD
