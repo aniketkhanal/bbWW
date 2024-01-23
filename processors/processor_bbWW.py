@@ -35,7 +35,7 @@ class analysis(processor.ProcessorABC):
         # defining histograms
         dataset_axis = hist.axis.StrCategory([], name="dataset", growth=True)
         sel_axis = hist.axis.StrCategory([], name="selection", growth=True)
-        pt_axis = hist.axis.Regular(100, 0, 100, name="pt", label=r'$p_{T}$ [GeV]')
+        pt_axis = hist.axis.Regular(500, 0, 500, name="pt", label=r'$p_{T}$ [GeV]')
         eta_axis = hist.axis.Regular(20, -5, 5, name="eta", label=r'$\eta$')
         mass_axis = hist.axis.Regular(60, 0, 150, name="mass", label=r'Mass [GeV]')
 
@@ -223,6 +223,7 @@ class analysis(processor.ProcessorABC):
         electrons = ak.with_field(electrons, (getattr(electrons, 'genPartFlav', 0) == 1) | (getattr(electrons, 'genPartFlav', 0) == 15), "MC_Match")
 
         # https://github.com/aebid/HHbbWW_Run3/blob/main/python/object_selection.py#L193
+        ##### jet selection
         ak4_jet_preselection_mask = (
             (ak4_jets.pt >= 25.0) & (abs(ak4_jets.eta) <= 2.4) &
             (ak4_jets.jetId  > 1)
@@ -583,19 +584,28 @@ class analysis(processor.ProcessorABC):
             iweight = eweight.weight()[icut]
             self.cutflow[dataset][isel] = len(events[icut])
 
-
+        #### For simplicity, let's redefine some quantities
         icut = sel_dict['Single_Res_allReco_2b']
         iweight = eweight.weight()[icut]
+        ak4_alljets = ak4_jets[ak4_jets.cleaned_single]
+        ak4_bjets = ak4_jets[ak4_jets.medium_btag_single]
+        ak4_nonbjets = ak4_jets[ ak.argsort( ak4_jets[ (ak4_jets.cleaned_single) & (~ak4_jets.medium_btag_single) ].pt, ascending=False ) ]
+
+        ## gen matching
+        gen_qFromW = ak.pad_none( qFromW, 2 )
+        jet_matched_q1FromW = ak4_nonbjets[ (gen_qFromW[:,0].delta_r( ak4_nonbjets ) < 0.2 ) ]
+        jet_matched_q2FromW = ak4_nonbjets[ (gen_qFromW[:,1].delta_r( ak4_nonbjets ) < 0.2 ) ]
+
         self.hists['numJets'].fill( dataset=dataset,
                                    selection=isel,
-                                   numJets=normalize(ak.num(ak4_jets.cleaned_single, axis=1), icut),
-                                   numBjets=normalize(ak.num(ak4_jets.medium_btag_single, axis=1), icut),
-                                   numnonBjets=normalize(ak.num(ak4_jets.jets_that_not_bb, axis=1), icut),
+                                   numJets=normalize(ak.num(ak4_alljets, axis=1), icut),
+                                   numBjets=normalize(ak.num(ak4_bjets, axis=1), icut),
+                                   numnonBjets=normalize(ak.num(ak4_nonbjets, axis=1), icut),
                                    weight=iweight )
         self.hists['jet1'].fill( dataset=dataset,
                                    selection=isel,
-                                   pt=normalize(ak4_jets[:,0].pt, icut),
-                                   eta=normalize(ak4_jets[:,0].eta, icut),
+                                   pt=normalize(ak4_alljets[icut][:,0].pt, None),
+                                   eta=normalize(ak4_alljets[icut][:,0].eta, None),
                                    weight=iweight )
 
 
