@@ -21,7 +21,6 @@ from coffea.lumi_tools import LumiMask
 from coffea.processor import PackedSelection   ### to move to analysis_tools
 import correctionlib
 
-from analysis.helpers.common import mask_event_decision
 
 ### from TAMU
 from coffea.nanoevents.methods import vector
@@ -656,3 +655,24 @@ def find_genpart(genpart, pdgid, ancestors):
         return genpart[pid][decaymatch]
 
     return genpart[pid]
+
+### extra functions
+def mask_event_decision(event, decision='OR', branch='HLT', list_to_mask=[''], list_to_skip=['']):
+    '''
+    Takes event.branch and passes an boolean array mask with the decisions of all the list_to_mask
+    '''
+
+    tmp_list = []
+    if branch in event.fields:
+        for i in list_to_mask:
+            if i in event[branch].fields:
+                tmp_list.append( event[branch][i] )
+            elif i in list_to_skip: continue
+            else: logging.warning(f'\n{i} branch not in {branch} for event.')
+    else: logging.warning(f'\n{branch} branch not in event.')
+    tmp_array = np.array( tmp_list )
+
+    if decision.lower().startswith('or'): decision_array = np.any( tmp_array, axis=0 )
+    else: decision_array = np.all( tmp_array, axis=0 )
+
+    return decision_array
