@@ -272,7 +272,7 @@ class analysis(processor.ProcessorABC):
         # https://github.com/aebid/HHbbWW_Run3/blob/main/python/object_selection.py#L193
         ##### jet selection
         ak4_jet_preselection_mask = (
-            (ak4_jets.pt > 25.0) & (abs(ak4_jets.eta) <= 2.4)
+            (ak4_jets.pt > 8.0) & (abs(ak4_jets.eta) <= 2.4)
             & (ak4_jets.jetId > 1)
         )
 
@@ -674,13 +674,13 @@ class analysis(processor.ProcessorABC):
         genjet_matched_pre25 = genjet_matched_pre[(genjet_matched_pre.pt >= 25)]
         genjet_matched_pre30 = genjet_matched_pre[(genjet_matched_pre.pt >= 30)]
         
-        genjet_matched_8 = genjet_matched[(genjet_matched.pt >= 8)]
-        genjet_matched_10 = genjet_matched[(genjet_matched.pt >= 10)]
-        genjet_matched_15 = genjet_matched[(genjet_matched.pt >= 15)]
-        genjet_matched_20 = genjet_matched[(genjet_matched.pt >= 20)]
-        genjet_matched_25 = genjet_matched[(genjet_matched.pt >= 25)]
-        genjet_matched_30 = genjet_matched[(genjet_matched.pt >= 30)]
-
+        genjet_matched8 = genjet_matched[(genjet_matched.pt >= 8)]
+        genjet_matched10 = genjet_matched[(genjet_matched.pt >= 10)]
+        genjet_matched15 = genjet_matched[(genjet_matched.pt >= 15)]
+        genjet_matched20 = genjet_matched[(genjet_matched.pt >= 20)]
+        genjet_matched25 = genjet_matched[(genjet_matched.pt >= 25)]
+        genjet_matched30 = genjet_matched[(genjet_matched.pt >= 30)]
+        print('your moms gay')
         #jet_matched_q1W = ak4_W_jets[ (gen_qFromW[:,0].delta_r( ak4_W_jets ) < 0.2 ) ]
         #jet_matched_q2W =ak4_W_jets[ (gen_qFromW[:,1].delta_r( ak4_W_jets ) < 0.2 ) ]
         #jet_matched_q1 = jet_matched_q1W[~ak.is_none(jet_matched_q1W)]
@@ -768,7 +768,7 @@ def mask_event_decision(event, decision='OR', branch='HLT', list_to_mask=[''], l
             if i in event[branch].fields:
                 tmp_list.append( event[branch][i] )
             elif i in list_to_skip: continue
-            else: logging.warning(f'\n{i} branch not in {branch} for event.')
+        else: logging.warning(f'\n{i} branch not in {branch} for event.')
     else: logging.warning(f'\n{branch} branch not in event.')
     tmp_array = np.array( tmp_list )
 
