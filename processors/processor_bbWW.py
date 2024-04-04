@@ -20,6 +20,7 @@ from coffea.analysis_tools import Weights
 from coffea.lumi_tools import LumiMask
 from coffea.processor import PackedSelection   ### to move to analysis_tools
 import correctionlib
+import itertools
 
 ### from TAMU
 from coffea.nanoevents.methods import vector
@@ -33,33 +34,11 @@ class analysis(processor.ProcessorABC):
         # defining histograms
         dataset_axis = hist.axis.StrCategory([], name="dataset", growth=True)
         sel_axis = hist.axis.StrCategory([], name="selection", growth=True)
-        pt_axis = hist.axis.Regular(200, 0, 200, name="pt", label=r'$p_{T}$ [GeV]')
+        pt_axis = hist.axis.Regular(23, 8, 30, name="pt", label=r'$p_{T}$ [GeV]')
         eta_axis = hist.axis.Regular(20, -5, 5, name="eta", label=r'$\eta$')
         phi_axis = hist.axis.Regular(22, 8,30, name="phi", label=r'$\phi$')
         dR_axis = hist.axis.Regular(100, -50, 50, name="dR", label=r'$\dR$')
         mass_axis = hist.axis.Regular(60, 0, 240, name="mass", label=r'Mass [GeV]')
-        pileup_axis = hist.axis.Regular(100, 0, 1, name="puId", label=r'pileup ID')
-        jetId_axis = hist.axis.Regular(20, 0, 20, name="jetId", label=r'jet ID')
-        beta_axis = hist.axis.Regular(100, 0, 1, name="puId_beta", label=r'beta')
-        dR2_axis = hist.axis.Regular(100, 0, 0.1, name="puId_dR2", label=r'dR2Mean')
-        frac01_axis = hist.axis.Regular(100, 0, 1, name="puId_frac01", label=r'frac01')
-        frac02_axis = hist.axis.Regular(100, 0, 1, name="puId_frac02", label=r'frac02')
-        frac03_axis = hist.axis.Regular(100, 0, 1, name="puId_frac03", label=r'frac03')
-        frac04_axis = hist.axis.Regular(100, 0, 1, name="puId_frac04", label=r'frac04')
-        jetR_axis = hist.axis.Regular(100, 0, 1, name="puId_jetR", label=r'jetR')
-        jetRchg_axis = hist.axis.Regular(100, 0, 1, name="puId_jetRchg", label=r'jetRchg')
-        majW_axis = hist.axis.Regular(50, 0, 0.5, name="puId_majW", label=r'majW')
-        minW_axis = hist.axis.Regular(50, 0, 0.5, name="puId_minW", label=r'minW')
-        nCharged_axis = hist.axis.Regular(50, 0, 50, name="puId_nCharged", label=r'nCharged')
-        ptD_axis = hist.axis.Regular(100, 0, 2 , name="puId_ptD", label=r'ptD')
-        pull_axis = hist.axis.Regular(100, 0, 0.1, name="puId_pull", label=r'pull')
-        chEmEF_axis = hist.axis.Regular(100, 0, 1, name="chEmEF", label=r'chEmEF')
-        chHEF_axis = hist.axis.Regular(100, 0, 1, name="chHEF", label=r'chHEF')
-        muEF_axis = hist.axis.Regular(100, 0, 1, name="muEF", label=r'muEF')
-        nConstituents_axis = hist.axis.Regular(80, 0, 80, name="nConstituents", label=r'nConstituents')
-        neEmEF_axis = hist.axis.Regular(100, 0, 1, name="neEmEF", label=r'neEmEF')
-        neHEF_axis = hist.axis.Regular(100, 0, 1, name="neHEF", label=r'neHEF')
-        num_axis = hist.axis.Regular(16, 0, 16, name="N_jets", label=r'N_{jets}')
 
         self.cutflow = {}
         self.hists = {
@@ -68,35 +47,17 @@ class analysis(processor.ProcessorABC):
                                  hist.axis.Regular(15, 0,15, name="numBjets", label='Number of b jets'),
                                  hist.axis.Regular(15, 0,15, name="numnonBjets", label='Number of non b jets'),
                                  ),
-            'jet1': hist.Hist( dataset_axis, sel_axis, pt_axis, eta_axis,mass_axis, storage="weight", label="Counts" ),
-            'jet1x': hist.Hist(phi_axis, neHEF_axis, label="Counts" ),
-            'jet1pileup1': hist.Hist(beta_axis, dR2_axis,frac01_axis, label="Counts" ),
-            'jet1pileup2': hist.Hist(frac02_axis,frac03_axis, frac04_axis, label="Counts" ),
-            'jet1pileup3': hist.Hist(jetR_axis, jetRchg_axis, majW_axis, label="Counts" ),
-            'jet1pileup4': hist.Hist(minW_axis, nCharged_axis, ptD_axis, label="Counts" ),
-            'jet1pileup5': hist.Hist(pull_axis, chEmEF_axis, chHEF_axis, label="Counts" ),
-            'jet1pileup6': hist.Hist(muEF_axis, nConstituents_axis, neEmEF_axis, label="Counts" ),
-            'jet1Ids': hist.Hist(jetId_axis, pileup_axis, label="Counts" ),
-            'jet1_': hist.Hist( dataset_axis, sel_axis, pt_axis, eta_axis, mass_axis, storage="weight", label="Counts" ),
-            'jet1_x': hist.Hist(phi_axis,neHEF_axis, label="Counts" ),
-            'jet1_pileup5': hist.Hist(pull_axis, chEmEF_axis, chHEF_axis, label="Counts" ),
-            'jet1_pileup6': hist.Hist(muEF_axis, nConstituents_axis, neEmEF_axis, label="Counts" ),
-            'jet1_Ids': hist.Hist(jetId_axis, pileup_axis, label="Counts" ),
-            'jet1p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet2p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet3p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet4p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet5p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet6p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet7p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet8p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet9p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet10p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet11p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-            'jet12p': hist.Hist(num_axis, storage="weight", label="Counts" ),
-      }
-
-
+            'jet1_reco': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet2_reco': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet3_reco': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet4_reco': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet1_gen': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet2_gen': hist.Hist( pt_axis, eta_axis,mass_axis, label="Counts" ),
+            'jet1p': hist.Hist(pt_axis, label="Counts"),
+            'jet2p': hist.Hist(pt_axis,label="Counts"),
+            'jet3p': hist.Hist(pt_axis, label="Counts"),
+            'jet4p': hist.Hist(pt_axis,label="Counts")
+            }
     @property
     def accumulator(self):
         return self.hists
@@ -644,48 +605,37 @@ class analysis(processor.ProcessorABC):
             puId = (0.85-0.7)*(jet_pt-30)/(30-8) + 0.85
             return puId
 
-        ak4_W_jets_cut = ak4_W_jets[(ak4_W_jets.pt > 30) | (ak4_W_jets.puIdDisc > puId_cut_low_pt(ak4_W_jets.pt))]
-        '''ak4_pairs = ak.combinations(ak4_W_jets,2,axis =1)
-        ak4_pairs_index = ak.argcombinations(ak4_W_jets,2,axis =1)
+        ak4_W_jets_cut = ak4_W_jets[((ak4_W_jets.pt > 30.0) | (ak4_W_jets.puIdDisc > puId_cut_low_pt(ak4_W_jets.pt)))]
+        ak4_pairs = ak.combinations(ak4_W_jets_cut,2,axis =1)
+        ak4_pairs_index = ak.argcombinations(ak4_W_jets_cut,2,axis =1)
         ak4_pairs_sum = ak.Array((ak4_pairs["0"] + ak4_pairs["1"]).mass)
         ak4_pairs_matched = ak4_pairs_index[ak.argsort(abs(80.377-ak4_pairs_sum),ascending = True)]
-        ak4_matched1 = ak4_W_jets[ak4_pairs_matched["0"]]
-        ak4_matched2 = ak4_W_jets[ak4_pairs_matched["1"]]
-        print((ak4_matched1+ak4_matched2).mass)'''
-        ## gen matching
-        #gen_qFromW = ak.pad_none( qFromW, 2 )
-        #matched_mask1 = (gen_qFromW[:,0].delta_r(ak4_W_jets)< 0.2)
-        #matched_mask2 = (gen_qFromW[:,1].delta_r(ak4_W_jets)< 0.2)
-        #matched_mask3 = (gen_qFromW[:,0].delta_r(genjets)< 0.2)
-        #matched_mask4 = (gen_qFromW[:,1].delta_r(genjets)< 0.2)
-        #genjets_qFromW1 =  ak.mask(genjets, matched_mask3)
-        #genjets_qFromW2 =  ak.mask(genjets, matched_mask4)
-        #jet_matched_q1 = ak.mask(ak4_W_jets,matched_mask1)
-        #jet_matched_q2 = ak.mask(ak4_W_jets,matched_mask2)
-        #jet_unmatched = ak.mask(ak4_W_jets,(~matched_mask1 & ~matched_mask2))
-        genjet_matched = ak4_W_jets_cut[(0<=ak4_W_jets_cut.genJetIdx)]
-        genjet_unmatched = ak4_W_jets_cut[~(0<=ak4_W_jets_cut.genJetIdx)]
-        genjet_matched_pre = ak4_W_jets[(0<=ak4_W_jets.genJetIdx)]
-        
-        genjet_matched_pre8 = genjet_matched_pre[(genjet_matched_pre.pt >= 8)]
-        genjet_matched_pre10 = genjet_matched_pre[(genjet_matched_pre.pt >= 10)]
-        genjet_matched_pre15 = genjet_matched_pre[(genjet_matched_pre.pt >= 15)]
-        genjet_matched_pre20 = genjet_matched_pre[(genjet_matched_pre.pt >= 20)]
-        genjet_matched_pre25 = genjet_matched_pre[(genjet_matched_pre.pt >= 25)]
-        genjet_matched_pre30 = genjet_matched_pre[(genjet_matched_pre.pt >= 30)]
-        
-        genjet_matched8 = genjet_matched[(genjet_matched.pt >= 8)]
-        genjet_matched10 = genjet_matched[(genjet_matched.pt >= 10)]
-        genjet_matched15 = genjet_matched[(genjet_matched.pt >= 15)]
-        genjet_matched20 = genjet_matched[(genjet_matched.pt >= 20)]
-        genjet_matched25 = genjet_matched[(genjet_matched.pt >= 25)]
-        genjet_matched30 = genjet_matched[(genjet_matched.pt >= 30)]
-        print('your moms gay')
-        #jet_matched_q1W = ak4_W_jets[ (gen_qFromW[:,0].delta_r( ak4_W_jets ) < 0.2 ) ]
-        #jet_matched_q2W =ak4_W_jets[ (gen_qFromW[:,1].delta_r( ak4_W_jets ) < 0.2 ) ]
-        #jet_matched_q1 = jet_matched_q1W[~ak.is_none(jet_matched_q1W)]
-        #jet_matched_q2 = jet_matched_q2W[~ak.is_none(jet_matched_q2W)]                    
 
+        ak4_matched1_ = ak4_W_jets_cut[ak4_pairs_matched["0"]]
+        ak4_matched2_ = ak4_W_jets_cut[ak4_pairs_matched["1"]]
+        ak4_matched1 = ak.pad_none(ak4_matched1_[(ak4_matched1_.pt<=30)],2)
+        ak4_matched2 = ak.pad_none(ak4_matched2_[(ak4_matched2_.pt<=30)],2)
+    
+        # gen matching
+        gen_qFromW = ak.pad_none( qFromW, 2 )
+        matched_mask11 = (gen_qFromW[:,0].delta_r(ak4_matched1[:,0])< 0.2)
+        matched_mask21 = (gen_qFromW[:,1].delta_r(ak4_matched1[:,0])< 0.2)
+        matched_mask12 = (gen_qFromW[:,0].delta_r(ak4_matched2[:,0])< 0.2)
+        matched_mask22 = (gen_qFromW[:,1].delta_r(ak4_matched2[:,0])< 0.2)
+        matched_mask3 = (gen_qFromW[:,0].delta_r(ak4_nonbjets)< 0.2)
+        matched_mask4 = (gen_qFromW[:,1].delta_r(ak4_nonbjets)< 0.2)
+        genjets_qFromW1 =  ak.mask(ak4_nonbjets, (matched_mask3& (ak4_nonbjets.pt<=30)))
+        genjets_qFromW2 =  ak.mask(ak4_nonbjets, (matched_mask4& (ak4_nonbjets.pt<=30)))
+        jet_matched1_q1 =  ak.mask(ak4_matched1[:,0], matched_mask11)
+        jet_matched2_q1 =  ak.mask(ak4_matched2[:,0], matched_mask12)
+        jet_matched1_q2 =  ak.mask(ak4_matched1[:,0], matched_mask21)
+        jet_matched2_q2 =  ak.mask(ak4_matched2[:,0], matched_mask22)
+
+        #post pileup cut matching
+        mask1 = (gen_qFromW[:,0].delta_r(ak4_W_jets_cut)< 0.2)
+        mask2 = (gen_qFromW[:,1].delta_r(ak4_W_jets_cut)< 0.2) 
+        ak4_post1 = ak.mask(ak4_W_jets_cut, mask1) 
+        ak4_post2 = ak.mask(ak4_W_jets_cut, mask2) 
 
         self.hists['numJets'].fill( dataset=dataset,
                                    selection=isel,
@@ -693,19 +643,28 @@ class analysis(processor.ProcessorABC):
                                    numBjets=normalize(ak.num(ak4_bjets, axis=1), icut),
                                    numnonBjets=normalize(ak.num(ak4_nonbjets, axis=1), icut),
                                    weight=iweight )
-        self.hists['jet1p'].fill( N_jets = normalize(ak.num(genjet_matched_pre8[icut].pt,axis = 1),None))
-        self.hists['jet2p'].fill( N_jets = normalize(ak.num(genjet_matched_pre10[icut].pt,axis = 1),None))
-        self.hists['jet3p'].fill( N_jets = normalize(ak.num(genjet_matched_pre15[icut].pt,axis = 1),None))
-        self.hists['jet4p'].fill( N_jets = normalize(ak.num(genjet_matched_pre20[icut].pt,axis = 1),None))
-        self.hists['jet5p'].fill( N_jets = normalize(ak.num(genjet_matched_pre25[icut].pt,axis = 1),None))
-        self.hists['jet6p'].fill( N_jets = normalize(ak.num(genjet_matched_pre30[icut].pt,axis = 1),None))
-        self.hists['jet7p'].fill( N_jets = normalize(ak.num(genjet_matched8[icut].pt,axis = 1),None))
-        self.hists['jet8p'].fill( N_jets = normalize(ak.num(genjet_matched10[icut].pt,axis = 1),None))
-        self.hists['jet9p'].fill( N_jets = normalize(ak.num(genjet_matched15[icut].pt,axis = 1),None))
-        self.hists['jet10p'].fill( N_jets = normalize(ak.num(genjet_matched20[icut].pt,axis = 1),None))
-        self.hists['jet11p'].fill( N_jets = normalize(ak.num(genjet_matched25[icut].pt,axis = 1),None))
-        self.hists['jet12p'].fill( N_jets = normalize(ak.num(genjet_matched30[icut].pt,axis = 1),None))
-
+        self.hists['jet1_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.pt,axis=None), None),
+                                      eta=  normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet2_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet3_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet4_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet1_gen'].fill( pt =   normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet2_gen'].fill( pt =   normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.pt,axis=None),None),
+                                     eta=   normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.eta,axis=None),None),
+                                      mass= normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.mass,axis=None),None))
+        self.hists['jet1p'].fill(pt = normalize(ak.flatten(genjets_qFromW1[icut].pt,axis=None),None))
+        self.hists['jet2p'].fill(pt= normalize(ak.flatten(genjets_qFromW2[icut].pt,axis=None),None))
+        self.hists['jet3p'].fill(pt = normalize(ak.flatten(ak4_post1[icut].pt,axis=None),None))
+        self.hists['jet4p'].fill(pt= normalize(ak.flatten(ak4_post2[icut].pt,axis=None),None))
         output = {
             'hists' : self.hists,
             'cutflow': self.cutflow,
