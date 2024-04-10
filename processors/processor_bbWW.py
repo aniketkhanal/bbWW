@@ -599,7 +599,9 @@ class analysis(processor.ProcessorABC):
         ak4_alljets = ak4_jets[ak4_jets.cleaned_single]
         ak4_bjets = ak4_jets[ak4_jets.medium_btag_single]
         ak4_nonbjets = ak4_jets[(ak4_jets.cleaned_single) & (~ak4_jets.medium_btag_single)]
-        ak4_W_jets = ak.pad_none(ak4_nonbjets,target = 2, axis = 1)
+        non_bjets_mask = (ak.count(ak4_nonbjets.pt,axis=1)>=2)
+        ak4_W_jets = ak.mask(ak4_nonbjets,non_bjets_mask)
+        print(ak4_W_jets)
         
         def puId_cut_low_pt(jet_pt):
             puId = (0.85-0.7)*(jet_pt-30)/(30-8) + 0.85
@@ -610,22 +612,21 @@ class analysis(processor.ProcessorABC):
         ak4_pairs_index = ak.argcombinations(ak4_W_jets_cut,2,axis =1)
         ak4_pairs_sum = ak.Array((ak4_pairs["0"] + ak4_pairs["1"]).mass)
         ak4_pairs_matched = ak4_pairs_index[ak.argsort(abs(80.377-ak4_pairs_sum),ascending = True)]
-
         ak4_matched1_ = ak4_W_jets_cut[ak4_pairs_matched["0"]]
         ak4_matched2_ = ak4_W_jets_cut[ak4_pairs_matched["1"]]
-        ak4_matched1 = ak.pad_none(ak4_matched1_[(ak4_matched1_.pt<=30)],2)
-        ak4_matched2 = ak.pad_none(ak4_matched2_[(ak4_matched2_.pt<=30)],2)
-    
+        ak4_matched1 = ak.pad_none(ak4_matched1_,1, axis=1)
+        ak4_matched2 = ak.pad_none(ak4_matched2_,1, axis=1)
+        
         # gen matching
         gen_qFromW = ak.pad_none( qFromW, 2 )
         matched_mask11 = (gen_qFromW[:,0].delta_r(ak4_matched1[:,0])< 0.2)
         matched_mask21 = (gen_qFromW[:,1].delta_r(ak4_matched1[:,0])< 0.2)
         matched_mask12 = (gen_qFromW[:,0].delta_r(ak4_matched2[:,0])< 0.2)
         matched_mask22 = (gen_qFromW[:,1].delta_r(ak4_matched2[:,0])< 0.2)
-        matched_mask3 = (gen_qFromW[:,0].delta_r(ak4_nonbjets)< 0.2)
-        matched_mask4 = (gen_qFromW[:,1].delta_r(ak4_nonbjets)< 0.2)
-        genjets_qFromW1 =  ak.mask(ak4_nonbjets, (matched_mask3& (ak4_nonbjets.pt<=30)))
-        genjets_qFromW2 =  ak.mask(ak4_nonbjets, (matched_mask4& (ak4_nonbjets.pt<=30)))
+        matched_mask3 = (gen_qFromW[:,0].delta_r(ak4_W_jets)< 0.2)
+        matched_mask4 = (gen_qFromW[:,1].delta_r(ak4_W_jets)< 0.2)
+        ak4_nonbjets_matched_qFromW1 =  ak.mask(ak4_W_jets, (matched_mask3))
+        ak4_nonbjets_matched_qFromW2 =  ak.mask(ak4_W_jets, (matched_mask4))
         jet_matched1_q1 =  ak.mask(ak4_matched1[:,0], matched_mask11)
         jet_matched2_q1 =  ak.mask(ak4_matched2[:,0], matched_mask12)
         jet_matched1_q2 =  ak.mask(ak4_matched1[:,0], matched_mask21)
@@ -643,28 +644,26 @@ class analysis(processor.ProcessorABC):
                                    numBjets=normalize(ak.num(ak4_bjets, axis=1), icut),
                                    numnonBjets=normalize(ak.num(ak4_nonbjets, axis=1), icut),
                                    weight=iweight )
-        self.hists['jet1_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.pt,axis=None), None),
-                                      eta=  normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(jet_matched1_q1[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet2_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.pt,axis=None),None),
-                                      eta=  normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(jet_matched2_q1[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet3_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.pt,axis=None),None),
-                                      eta=  normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(jet_matched1_q2[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet4_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.pt,axis=None),None),
-                                      eta=  normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(jet_matched2_q2[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet1_gen'].fill( pt =   normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.pt,axis=None),None),
-                                      eta=  normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(genjets_qFromW1[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet2_gen'].fill( pt =   normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.pt,axis=None),None),
-                                     eta=   normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.eta,axis=None),None),
-                                      mass= normalize(ak.flatten(genjets_qFromW2[icut].matched_gen.mass,axis=None),None))
-        self.hists['jet1p'].fill(pt = normalize(ak.flatten(genjets_qFromW1[icut].pt,axis=None),None))
-        self.hists['jet2p'].fill(pt= normalize(ak.flatten(genjets_qFromW2[icut].pt,axis=None),None))
-        self.hists['jet3p'].fill(pt = normalize(ak.flatten(ak4_post1[icut].pt,axis=None),None))
-        self.hists['jet4p'].fill(pt= normalize(ak.flatten(ak4_post2[icut].pt,axis=None),None))
+        self.hists['jet1_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q1[icut].pt,axis=None), None),
+                                      eta=  normalize(ak.flatten(jet_matched1_q1[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched1_q1[icut].mass,axis=None),None))
+        self.hists['jet2_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q1[icut].pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched2_q1[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched2_q1[icut].mass,axis=None),None))
+        self.hists['jet3_reco'].fill( pt =  normalize(ak.flatten(jet_matched1_q2[icut].pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched1_q2[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched1_q2[icut].mass,axis=None),None))
+        self.hists['jet4_reco'].fill( pt =  normalize(ak.flatten(jet_matched2_q2[icut].pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(jet_matched2_q2[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(jet_matched2_q2[icut].mass,axis=None),None))
+        self.hists['jet1_gen'].fill( pt =   normalize(ak.flatten(ak4_nonbjets_matched_qFromW1[icut].pt,axis=None),None),
+                                      eta=  normalize(ak.flatten(ak4_nonbjets_matched_qFromW1[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(ak4_nonbjets_matched_qFromW1[icut].mass,axis=None),None))
+        self.hists['jet2_gen'].fill( pt =   normalize(ak.flatten(ak4_nonbjets_matched_qFromW2[icut].pt,axis=None),None),
+                                     eta=   normalize(ak.flatten(ak4_nonbjets_matched_qFromW2[icut].eta,axis=None),None),
+                                      mass= normalize(ak.flatten(ak4_nonbjets_matched_qFromW2[icut].mass,axis=None),None))
+        self.hists['jet1p'].fill(pt = normalize(ak.flatten(ak4_post1[icut].pt,axis=None),None))
+        self.hists['jet2p'].fill(pt= normalize(ak.flatten(ak4_post2[icut].pt,axis=None),None))
         output = {
             'hists' : self.hists,
             'cutflow': self.cutflow,
